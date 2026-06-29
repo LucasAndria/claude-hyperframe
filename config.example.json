@@ -1,0 +1,20 @@
+{
+  "source": "avatar",
+  "script_file": "scripts/script.xlsx",
+  "output_dir": "output",
+  "orientation": "horizontal",
+  "heygen": {
+    "avatar_id": "466cbaab8c974d14a4f631b60ac71d61",
+    "voice_id": ""
+  },
+  "source_video": {
+    "file": "source-video/input.mp4"
+  },
+  "hyperframe": {
+    "fps": 25,
+    "composition_dir": ""
+  },
+  "motion": {
+    "config": "motion/motion.config.json"
+  }
+}
