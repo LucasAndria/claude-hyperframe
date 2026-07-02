@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Per-video pipeline: videos/<CODE>/ (script + config) -> HeyGen avatar -> Hyperframe -> ffmpeg -> final MP4.
+"""Per-video pipeline: projects/<CODE>/ (script + config) -> HeyGen avatar -> Hyperframe -> ffmpeg -> final MP4.
 
 Everything for one video lives in its own folder:
 
-    videos/<CODE>/
+    projects/<CODE>/
         config.json      per-video settings (optional -- defaults below)
         script.xlsx      the validated script
         source-video/    (alt) a pre-recorded base clip instead of HeyGen
@@ -11,7 +11,7 @@ Everything for one video lives in its own folder:
         output/          all rendered results for this video
 
 Usage:
-    python main.py EMO14_VID01          # or: python main.py videos/EMO14_VID01
+    python main.py EMO14_VID01          # or: python main.py projects/EMO14_VID01
 """
 
 import json
@@ -28,7 +28,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 log = logging.getLogger("avatar-pipeline")
 
 ROOT = Path(__file__).parent
-VIDEOS_DIR = ROOT / "videos"
+PROJECTS_DIR = ROOT / "projects"
 
 DEFAULT_CONFIG = {
     "source": "avatar",
@@ -51,14 +51,14 @@ class PipelineError(Exception):
 
 
 def list_videos() -> list[str]:
-    if not VIDEOS_DIR.exists():
+    if not PROJECTS_DIR.exists():
         return []
-    return sorted(p.name for p in VIDEOS_DIR.iterdir() if p.is_dir())
+    return sorted(p.name for p in PROJECTS_DIR.iterdir() if p.is_dir())
 
 
 def resolve_video_dir(arg: str) -> Path:
-    """Accept 'EMO14_VID01', 'videos/EMO14_VID01', or an absolute path."""
-    for candidate in (Path(arg), ROOT / arg, VIDEOS_DIR / arg):
+    """Accept 'EMO14_VID01', 'projects/EMO14_VID01', or an absolute path."""
+    for candidate in (Path(arg), ROOT / arg, PROJECTS_DIR / arg):
         if candidate.is_dir() and candidate.resolve() != ROOT.resolve():
             return candidate.resolve()
     available = "\n  ".join(list_videos()) or "(none yet -- create one with: python new_video.py <CODE>)"

@@ -16,12 +16,12 @@ MCP tools + per-video build scripts described below.
 
 ## One folder per video — the core rule
 
-**Everything belonging to a video lives in `videos/<CODE>/`** (script, config, sequences,
+**Everything belonging to a video lives in `projects/<CODE>/`** (script, config, sequences,
 generated clips, composition, output). NEVER put per-video files at the repo root, and NEVER
 overwrite or delete another video's folder when starting a new one.
 
 ```
-videos/<CODE>/
+projects/<CODE>/
 ├── config.json            per-video settings (avatar, voice, fps, orientation) — COMMITTED
 ├── script.xlsx            validated Excel script — COMMITTED
 ├── sequences.json         structured source of truth — COMMITTED
@@ -39,14 +39,14 @@ Shared at the root: `motion/` (reusable motion library, staged into each video's
 ## Commands
 
 ```bash
-# Scaffold a NEW video project (creates videos/<CODE>/ with config, dirs, motion staged)
+# Scaffold a NEW video project (creates projects/<CODE>/ with config, dirs, motion staged)
 python new_video.py <CODE> [--script path.xlsx] [--vertical]
 
 # Assemble the edited base video for a video
-python videos/<CODE>/build_base.py          # -> videos/<CODE>/output/<CODE>_1_base.mp4
+python projects/<CODE>/build_base.py          # -> projects/<CODE>/output/<CODE>_1_base.mp4
 
 # Render the HyperFrames overlay composition to a SILENT mp4 (mux audio back after)
-npx hyperframes render videos/<CODE>/public --fps 25
+npx hyperframes render projects/<CODE>/public --fps 25
 npx hyperframes doctor            # troubleshoot the Node/Chrome render environment
 
 # Reference orchestrator, per video (HeyGen step is a placeholder — see note above)
@@ -58,7 +58,7 @@ pip install openpyxl              # required to read .xlsx scripts
 There are no tests, linters, or a package.json — `hyperframes` runs via `npx`.
 ffmpeg and ffprobe must be on PATH.
 
-## The proven per-video workflow (see `videos/EMO14_VID01/` — the template)
+## The proven per-video workflow (see `projects/EMO14_VID01/` — the template)
 
 - `sequences.json` — the source of truth: title, avatar_id, voice_id, fps, and an array of
   numbered sequences. Each sequence has `role: "emy"` (on-camera avatar talking head) or
@@ -73,11 +73,11 @@ ffmpeg and ffprobe must be on PATH.
 - **`build_base.py`** — assembles the edit: `emy` segments used as-is; `broll` segments take
   video from the b-roll trimmed to the HeyGen clip's exact duration + audio from the HeyGen clip
   (Emy VO). Everything normalised to **1920×1080 / 25fps / h264 yuv420p / aac 48k stereo**, then
-  concatenated → `videos/<CODE>/output/<CODE>_1_base.mp4`.
+  concatenated → `projects/<CODE>/output/<CODE>_1_base.mp4`.
 - **HyperFrames overlays** — `public/index.html` is a `graphic-overlays` composition: base video
   full-bleed throughout, ~8 restrained typographic beats (Montserrat, warm cream/terracotta
   palette, gentle fades, scrims for legibility). Render silent, then ffmpeg-mux the base audio →
-  `videos/<CODE>/output/<CODE>.mp4`.
+  `projects/<CODE>/output/<CODE>.mp4`.
 
 ## Motion library (`motion/`)
 
@@ -103,7 +103,7 @@ Worked example in `motion/example/`.
   mid-frames and build a `tile` contact sheet; label by grid position. Keep QA frames in
   `review_frames/` or `ov_frames/` inside the video folder (gitignored).
 - **Recover the Montserrat font from git** if missing:
-  `git show HEAD:videos/EMO03_VID01/public/vendor/fonts/Montserrat.ttf`.
+  `git show HEAD:projects/EMO03_VID01/public/vendor/fonts/Montserrat.ttf`.
 - **Gitignored per video**: `output/`, `source-video/`, `heygen_clips/`, `higgsfield/stills|clips/`,
   `segments/`, `renders/`, `review_frames/`, `ov_frames/`, `snapshots/`, and all `*.mp4`/`*.mp3`.
   Committed video sources = xlsx/json/py/html/js/css + authored `public/assets` images.

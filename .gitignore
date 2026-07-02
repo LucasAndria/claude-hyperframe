@@ -5,31 +5,31 @@
 .agents/
 .claude/skills/
 
-# ---- Legacy root locations (everything now lives in videos/<CODE>/) ----
+# ---- Legacy root locations (everything now lives in projects/<CODE>/) ----
 /config.json
 /output/
 /source-video/
 
 # ---- Per-video generated artifacts (keep source: xlsx/json/py/html/js/css, authored assets) ----
-videos/**/output/
-videos/**/source-video/
-videos/**/heygen_clips/
-videos/**/higgsfield/stills/
-videos/**/higgsfield/clips/
-videos/**/segments/
-videos/**/renders/
-videos/**/review_frames/
-videos/**/ov_frames/
-videos/**/snapshots/
-videos/**/_backup/
-videos/**/_final/
-videos/**/_frames/
-videos/**/_qa/
-videos/**/*.mp4
-videos/**/*.mp3
-videos/**/*.bak.*
-videos/**/overlay_check.png
-videos/**/still_contact.png
+projects/**/output/
+projects/**/source-video/
+projects/**/heygen_clips/
+projects/**/higgsfield/stills/
+projects/**/higgsfield/clips/
+projects/**/segments/
+projects/**/renders/
+projects/**/review_frames/
+projects/**/ov_frames/
+projects/**/snapshots/
+projects/**/_backup/
+projects/**/_final/
+projects/**/_frames/
+projects/**/_qa/
+projects/**/*.mp4
+projects/**/*.mp3
+projects/**/*.bak.*
+projects/**/overlay_check.png
+projects/**/still_contact.png
 
 # ---- Python ----
 __pycache__/

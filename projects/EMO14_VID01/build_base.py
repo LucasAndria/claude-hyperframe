@@ -11,7 +11,7 @@ then concatenated into <this video folder>/output/<CODE>_1_base.mp4.
 import json, subprocess, sys
 from pathlib import Path
 
-BASE = Path(__file__).parent                      # videos/<CODE>
+BASE = Path(__file__).parent                      # projects/<CODE>
 HEYGEN = BASE / "heygen_clips"
 BROLL = BASE / "higgsfield" / "clips"
 WORK = BASE / "segments"

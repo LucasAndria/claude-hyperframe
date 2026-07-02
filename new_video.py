@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scaffold a new self-contained video project under videos/<CODE>/.
+"""Scaffold a new self-contained video project under projects/<CODE>/.
 
 Usage:
     python new_video.py EMO15_VID01
@@ -7,7 +7,7 @@ Usage:
     python new_video.py EMO15_VID01 --vertical
 
 Creates:
-    videos/<CODE>/
+    projects/<CODE>/
         config.json          per-video settings (avatar, voice, fps, orientation)
         script.xlsx          copied in if --script is given
         sequences.json       stub to fill from the script (source of truth)
@@ -17,7 +17,7 @@ Creates:
         source-video/        (alt) drop a pre-recorded base clip here
         output/              rendered results for this video
 
-Nothing outside videos/<CODE>/ is touched: creating a new video never
+Nothing outside projects/<CODE>/ is touched: creating a new video never
 overwrites or removes another video's files.
 """
 
@@ -27,7 +27,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from main import DEFAULT_CONFIG, ROOT, VIDEOS_DIR, stage_motion_assets
+from main import DEFAULT_CONFIG, ROOT, PROJECTS_DIR, stage_motion_assets
 
 SEQUENCES_STUB = {
     "title": "",
@@ -47,7 +47,7 @@ def main() -> int:
     parser.add_argument("--vertical", action="store_true", help="9:16 instead of the default 16:9")
     args = parser.parse_args()
 
-    video_dir = VIDEOS_DIR / args.code
+    video_dir = PROJECTS_DIR / args.code
     if video_dir.exists():
         print(f"ERROR: {video_dir} already exists — refusing to touch it.", file=sys.stderr)
         return 1
@@ -78,8 +78,8 @@ def main() -> int:
     for p in sorted(video_dir.rglob("*")):
         print(f"  {p.relative_to(video_dir)}{'/' if p.is_dir() else ''}")
     print("\nNext steps:")
-    print(f"  1. Put the validated script at videos/{args.code}/script.xlsx (if not copied)")
-    print(f"  2. Fill videos/{args.code}/sequences.json from the script")
+    print(f"  1. Put the validated script at projects/{args.code}/script.xlsx (if not copied)")
+    print(f"  2. Fill projects/{args.code}/sequences.json from the script")
     print(f"  3. In Claude Code, generate HeyGen clips + Higgsfield b-roll, then build")
     return 0
 

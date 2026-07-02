@@ -1,7 +1,7 @@
 # Avatar Video Pipeline
 
 Local automation for **La Petite Crèche** EMO videos: each video is a fully
-self-contained project folder under `videos/<CODE>/` (script, config, generated
+self-contained project folder under `projects/<CODE>/` (script, config, generated
 clips, overlay composition, and output all live together). The pipeline turns a
 per-video Excel script into a finished MP4: HeyGen avatar clips → Higgsfield
 b-roll → ffmpeg assembly → HyperFrames typographic overlays.
@@ -9,7 +9,7 @@ b-roll → ffmpeg assembly → HyperFrames typographic overlays.
 ## Layout: one folder per video
 
 ```
-videos/<CODE>/                  e.g. videos/EMO14_VID01/
+projects/<CODE>/                  e.g. projects/EMO14_VID01/
 ├── config.json                 per-video settings (avatar, voice, fps, orientation)
 ├── script.xlsx                 the validated Excel script
 ├── sequences.json              structured source of truth (roles, script per sequence)
@@ -41,32 +41,32 @@ python new_video.py EMO15_VID01
 # optionally: --script "path/to/EMO15_VID01.xlsx"   --vertical (9:16)
 ```
 
-This creates `videos/EMO15_VID01/` with a default `config.json` (Emy avatar +
+This creates `projects/EMO15_VID01/` with a default `config.json` (Emy avatar +
 French voice Audrey, 16:9, 25 fps), a `sequences.json` stub, the standard
 subfolders, and the motion library staged into `public/vendor/`.
 
 Then, in Claude Code, ask e.g.:
 
-> Build EMO15_VID01 from videos/EMO15_VID01/script.xlsx.
+> Build EMO15_VID01 from projects/EMO15_VID01/script.xlsx.
 
 Claude fills `sequences.json`, generates the HeyGen clips and Higgsfield b-roll
 via MCP, assembles the base with `build_base.py`, authors the HyperFrames
-overlays in `public/`, and renders the final MP4 into `videos/EMO15_VID01/output/`.
+overlays in `public/`, and renders the final MP4 into `projects/EMO15_VID01/output/`.
 
 ## Run the reference orchestrator
 
 ```bash
-python main.py EMO14_VID01        # or: python main.py videos/EMO14_VID01
+python main.py EMO14_VID01        # or: python main.py projects/EMO14_VID01
 ```
 
-- Reads `videos/<CODE>/config.json` (missing file = sensible defaults).
+- Reads `projects/<CODE>/config.json` (missing file = sensible defaults).
 - `"source": "avatar"` — generate the base from `script.xlsx` with a HeyGen
   avatar (the HeyGen step is still a placeholder; real generation runs through
   the HeyGen MCP driven by Claude).
 - `"source": "video"` — skip HeyGen and use a clip from the video's own
   `source-video/` folder.
 - Renders the HyperFrames composition in `public/` (silent), then muxes the
-  narration audio back with ffmpeg. Everything lands in `videos/<CODE>/output/`.
+  narration audio back with ffmpeg. Everything lands in `projects/<CODE>/output/`.
 
 ## Setup
 
