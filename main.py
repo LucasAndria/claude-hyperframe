@@ -42,7 +42,7 @@ DEFAULT_CONFIG = {
     },
     "source_video": {"file": "source-video/input.mp4"},
     "hyperframe": {"fps": 25, "composition_dir": "public"},
-    "motion": {"config": "motion/motion.config.json"},
+    "motion": {"config": "shared/motion/motion.config.json"},
 }
 
 
@@ -213,10 +213,10 @@ def stage_motion_assets(public_dir: Path, video_dir: Path, cfg: dict) -> None:
     """
     vendor = public_dir / "vendor"
     vendor.mkdir(parents=True, exist_ok=True)
-    lib = ROOT / "motion" / "reference-motion.js"
+    lib = ROOT / "shared" / "motion" / "reference-motion.js"
     if lib.exists():
         shutil.copyfile(lib, vendor / "reference-motion.js")
-    cfg_path = resolve_path(video_dir, cfg.get("motion", {}).get("config", "motion/motion.config.json"))
+    cfg_path = resolve_path(video_dir, cfg.get("motion", {}).get("config", "shared/motion/motion.config.json"))
     motion_style = {}
     if cfg_path.exists():
         motion_style = json.loads(cfg_path.read_text(encoding="utf-8")).get("motionStyle", {})

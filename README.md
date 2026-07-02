@@ -1,72 +1,74 @@
 # Avatar Video Pipeline
 
 Local automation for **La Petite Crèche** EMO videos: each video is a fully
-self-contained project folder under `projects/<CODE>/` (script, config, generated
-clips, overlay composition, and output all live together). The pipeline turns a
-per-video Excel script into a finished MP4: HeyGen avatar clips → Higgsfield
-b-roll → ffmpeg assembly → HyperFrames typographic overlays.
+self-contained project folder under `projects/<CODE>/`, driven by **one
+command** — `python emo.py`. The pipeline turns a per-video Excel script into a
+finished MP4: HeyGen avatar clips → Higgsfield b-roll → ffmpeg assembly →
+HyperFrames typographic overlays.
+
+**Non-technical team members: read [GUIDE.md](GUIDE.md) (French, step by step).**
+
+## The one command
+
+```bash
+python emo.py status                  # every project + its next step
+python emo.py new EMO15_VID01        # scaffold a new self-contained project
+python emo.py build EMO15_VID01      # assemble the base edit from the clips
+python emo.py render EMO15_VID01     # render overlays + mux audio -> final MP4
+```
+
+`status` example:
+
+```
+PROJET         script seq     heygen  broll  base  overlays final  PROCHAINE ETAPE
+EMO14_VID01    OK     19      19/19   10/10  OK    OK       OK     TERMINE
+EMO14_VID02    OK     --      --      --     --    --       --     remplir sequences.json
+```
 
 ## Layout: one folder per video
 
 ```
-projects/<CODE>/                  e.g. projects/EMO14_VID01/
+projects/<CODE>/                e.g. projects/EMO14_VID01/
 ├── config.json                 per-video settings (avatar, voice, fps, orientation)
 ├── script.xlsx                 the validated Excel script
 ├── sequences.json              structured source of truth (roles, script per sequence)
-├── build_base.py               assembles the edited base video (per-video)
 ├── heygen_clips/               seqNN.mp4 talking-head clips (HeyGen MCP)      [gitignored]
 ├── higgsfield/stills|clips/    b-roll stills + animated clips (Higgsfield)    [gitignored]
 ├── source-video/               (alt) drop a pre-recorded base clip here       [gitignored]
 ├── public/                     HyperFrames overlay composition (index.html)
 └── output/                     ALL rendered results for this video            [gitignored]
-    ├── <CODE>_1_base.mp4       assembled base edit
-    ├── <CODE>_2_overlay.mp4    silent HyperFrames render
-    └── <CODE>.mp4              final video
+    ├── <CODE>_1_base.mp4       assembled base edit        (emo.py build)
+    ├── <CODE>_2_overlay.mp4    silent HyperFrames render  (emo.py render)
+    └── <CODE>.mp4              final video                (emo.py render)
 ```
 
-Shared, reusable pieces stay at the repo root:
+Shared, reusable pieces live in `shared/` — staged automatically into every new
+project by `emo.py new`:
 
-- `motion/` — the deterministic reference-explainer motion library
-  (`window.RefMotion`); it is auto-staged into each video's `public/vendor/`.
-- `main.py` — the reference orchestrator (run per video, see below).
-- `new_video.py` — scaffolds a new video folder.
+- `shared/motion/` — deterministic reference-explainer motion library (`window.RefMotion`)
+- `shared/fonts/Montserrat.ttf` + `shared/vendor/gsap.min.js` — brand font & animation lib
+- `shared/brand.md` — the palette / typography / overlay-style reference
 
-Starting a new video **never touches another video's files** — no more
-overwriting `scripts/`, `config.json`, or `output/` between videos.
+Starting a new video **never touches another video's files**.
 
-## Start a new video
+## Production workflow
 
-```bash
-python new_video.py EMO15_VID01
-# optionally: --script "path/to/EMO15_VID01.xlsx"   --vertical (9:16)
-```
+1. `python emo.py new <CODE> --script <file.xlsx>` — scaffold the project.
+2. In Claude Code: *"Remplis sequences.json pour `<CODE>`"* — Claude structures
+   the Excel script into sequences (Emy on-camera vs. b-roll).
+3. *"Génère les clips HeyGen pour `<CODE>`"* — one clip per sequence via the
+   HeyGen MCP (avatar Emy, French voice Audrey).
+4. *"Génère les b-roll Higgsfield pour `<CODE>`"* — consistent visual family,
+   animated with Seedance image-to-video.
+5. `python emo.py build <CODE>` — ffmpeg assembles the edit (b-roll video +
+   Emy VO, everything normalised and concatenated).
+6. *"Crée les overlays HyperFrames pour `<CODE>`"* — Claude authors the
+   typographic overlay composition in `public/`.
+7. `python emo.py render <CODE>` — renders the overlays (silent) and muxes the
+   base audio back in → `projects/<CODE>/output/<CODE>.mp4`.
 
-This creates `projects/EMO15_VID01/` with a default `config.json` (Emy avatar +
-French voice Audrey, 16:9, 25 fps), a `sequences.json` stub, the standard
-subfolders, and the motion library staged into `public/vendor/`.
-
-Then, in Claude Code, ask e.g.:
-
-> Build EMO15_VID01 from projects/EMO15_VID01/script.xlsx.
-
-Claude fills `sequences.json`, generates the HeyGen clips and Higgsfield b-roll
-via MCP, assembles the base with `build_base.py`, authors the HyperFrames
-overlays in `public/`, and renders the final MP4 into `projects/EMO15_VID01/output/`.
-
-## Run the reference orchestrator
-
-```bash
-python main.py EMO14_VID01        # or: python main.py projects/EMO14_VID01
-```
-
-- Reads `projects/<CODE>/config.json` (missing file = sensible defaults).
-- `"source": "avatar"` — generate the base from `script.xlsx` with a HeyGen
-  avatar (the HeyGen step is still a placeholder; real generation runs through
-  the HeyGen MCP driven by Claude).
-- `"source": "video"` — skip HeyGen and use a clip from the video's own
-  `source-video/` folder.
-- Renders the HyperFrames composition in `public/` (silent), then muxes the
-  narration audio back with ffmpeg. Everything lands in `projects/<CODE>/output/`.
+`main.py` remains as a thin reference orchestrator (`python main.py <CODE>`);
+its HeyGen step is a placeholder — real generation runs through the MCPs.
 
 ## Setup
 
@@ -76,17 +78,8 @@ python main.py EMO14_VID01        # or: python main.py projects/EMO14_VID01
 3. HeyGen + Higgsfield run as MCP servers inside Claude Code (`/mcp` to
    authenticate) — no API keys stored in this repo.
 
-## Motion system
-
-A reusable, deterministic **reference-explainer** motion library lives in `motion/`
-(restrained push-ins, parallax, clean card/PIP reveals, editorial cuts). It is
-auto-staged into every composition's `public/vendor/`, so any HyperFrames scene
-can use `window.RefMotion` presets. Tune intensity globally in
-`motion/motion.config.json` (`motionStyle.intensity`, default 0.65 — subtle).
-See `motion/README.md` and the worked example in `motion/example/`.
-
 ## Error handling
 
-The pipeline logs and exits with a clear message for: unknown video folder,
-missing or empty script, failed HeyGen generation, failed Hyperframe render,
-missing ffmpeg, and ffmpeg errors.
+Every command fails with a clear, actionable message: unknown project, missing
+script/sequences/clips, missing composition, missing ffmpeg, render failures
+(try `npx hyperframes doctor`).

@@ -9,10 +9,10 @@ explainer videos (EMO03, EMO07, EMO14, …). It turns a per-video Excel script i
 MP4 by chaining: **HeyGen** avatar talking-head clips → **Higgsfield** AI b-roll for non-avatar
 scenes → **ffmpeg** assembly → **HyperFrames** HTML typographic overlays.
 
-The heavy lifting runs through **MCP tools driven by Claude inside Claude Code**, not by a
-plain `python main.py`. `main.py` is a thin reference orchestrator whose HeyGen step is still a
-placeholder (`generate_heygen_video` raises "not implemented"); real production happens via the
-MCP tools + per-video build scripts described below.
+The heavy lifting runs through **MCP tools driven by Claude inside Claude Code**; the
+mechanical steps run through **`emo.py`**, the single CLI. `main.py` is a thin reference
+orchestrator whose HeyGen step is still a placeholder. `GUIDE.md` is the French step-by-step
+guide for the team — keep it in sync when the workflow changes.
 
 ## One folder per video — the core rule
 
@@ -25,7 +25,6 @@ projects/<CODE>/
 ├── config.json            per-video settings (avatar, voice, fps, orientation) — COMMITTED
 ├── script.xlsx            validated Excel script — COMMITTED
 ├── sequences.json         structured source of truth — COMMITTED
-├── build_base.py          per-video assembly script — COMMITTED
 ├── heygen_clips/          seqNN.mp4 (HeyGen MCP)                      [gitignored]
 ├── higgsfield/            stills/ + clips/ + *_ids.json               [media gitignored]
 ├── source-video/          (alt) pre-recorded base clip                [gitignored]
@@ -33,30 +32,25 @@ projects/<CODE>/
 └── output/                <CODE>_1_base.mp4, <CODE>_2_overlay.mp4, <CODE>.mp4  [gitignored]
 ```
 
-Shared at the root: `motion/` (reusable motion library, staged into each video's
-`public/vendor/`), `main.py`, `new_video.py`.
+Shared at the root: `shared/` (motion library, Montserrat, GSAP, `brand.md` — auto-staged
+into new projects), `emo.py`, `main.py`, `GUIDE.md`.
 
-## Commands
+## Commands — `emo.py` is the single entry point
 
 ```bash
-# Scaffold a NEW video project (creates projects/<CODE>/ with config, dirs, motion staged)
-python new_video.py <CODE> [--script path.xlsx] [--vertical]
+python emo.py status              # dashboard: every project + its next step
+python emo.py new <CODE> [--script path.xlsx] [--vertical]   # scaffold a project
+python emo.py build <CODE>       # assemble base edit -> projects/<CODE>/output/<CODE>_1_base.mp4
+python emo.py render <CODE>      # render overlays (silent) + mux base audio -> final <CODE>.mp4
 
-# Assemble the edited base video for a video
-python projects/<CODE>/build_base.py          # -> projects/<CODE>/output/<CODE>_1_base.mp4
-
-# Render the HyperFrames overlay composition to a SILENT mp4 (mux audio back after)
-npx hyperframes render projects/<CODE>/public --fps 25
 npx hyperframes doctor            # troubleshoot the Node/Chrome render environment
-
-# Reference orchestrator, per video (HeyGen step is a placeholder — see note above)
-python main.py <CODE>
-
+python main.py <CODE>            # reference orchestrator (HeyGen step is a placeholder)
 pip install openpyxl              # required to read .xlsx scripts
 ```
 
 There are no tests, linters, or a package.json — `hyperframes` runs via `npx`.
-ffmpeg and ffprobe must be on PATH.
+ffmpeg and ffprobe must be on PATH. Run `python emo.py status` first to see where a
+project stands before doing anything.
 
 ## The proven per-video workflow (see `projects/EMO14_VID01/` — the template)
 
@@ -70,40 +64,42 @@ ffmpeg and ffprobe must be on PATH.
 - **Higgsfield** for `broll` rows → build ONE reference-family still (nano_banana_2), save it as
   a reusable **Element**, generate per-beat stills referencing that element, animate each with
   Seedance 2.0 image-to-video (`generate_audio:false`) → `higgsfield/clips/brollNN.mp4`.
-- **`build_base.py`** — assembles the edit: `emy` segments used as-is; `broll` segments take
+- **`emo.py build`** — assembles the edit: `emy` segments used as-is; `broll` segments take
   video from the b-roll trimmed to the HeyGen clip's exact duration + audio from the HeyGen clip
-  (Emy VO). Everything normalised to **1920×1080 / 25fps / h264 yuv420p / aac 48k stereo**, then
-  concatenated → `projects/<CODE>/output/<CODE>_1_base.mp4`.
+  (Emy VO). Everything normalised (1920×1080 or 1080×1920 if vertical / fps from config / h264
+  yuv420p / aac 48k stereo), then concatenated → `output/<CODE>_1_base.mp4`.
 - **HyperFrames overlays** — `public/index.html` is a `graphic-overlays` composition: base video
-  full-bleed throughout, ~8 restrained typographic beats (Montserrat, warm cream/terracotta
-  palette, gentle fades, scrims for legibility). Render silent, then ffmpeg-mux the base audio →
-  `projects/<CODE>/output/<CODE>.mp4`.
+  full-bleed throughout (as `public/input-video.mp4`), ~8 restrained typographic beats following
+  `shared/brand.md` (Montserrat, cream/terracotta palette, gentle fades, scrims for legibility).
+- **`emo.py render`** — refreshes `public/input-video.mp4` from the base, renders the
+  composition silent, then ffmpeg-muxes the base audio → `output/<CODE>.mp4`.
 
-## Motion library (`motion/`)
+## Shared assets (`shared/`)
 
-A reusable, deterministic **reference-explainer** motion library (`motion/reference-motion.js`,
-exposes `window.RefMotion`; restrained push-ins, parallax, clean card/PIP reveals).
-`main.py`'s `stage_motion_assets` (also called by `new_video.py`) copies it plus
-`motion/motion.config.json`'s `motionStyle` into a composition's `public/vendor/`. Tune
-intensity globally in `motion/motion.config.json` (`intensity`, default 0.65 — subtle).
-Worked example in `motion/example/`.
+- `shared/motion/` — reusable, deterministic **reference-explainer** motion library
+  (`reference-motion.js`, exposes `window.RefMotion`; restrained push-ins, parallax, clean
+  card/PIP reveals). Staged into each composition's `public/vendor/` by `emo.py new`, `emo.py
+  render`, and `main.py`. Tune intensity globally in `shared/motion/motion.config.json`
+  (`intensity`, default 0.65 — subtle). Worked example in `shared/motion/example/`.
+- `shared/fonts/Montserrat.ttf`, `shared/vendor/gsap.min.js` — copied into each new project's
+  `public/` by `emo.py new`.
+- `shared/brand.md` — palette (cream `#fbf6ef`, terracotta `#d98b63`, muted `#d8cabb`, ink
+  `#271c16`), typography, and overlay-style rules. Follow it in every composition.
 
 ## Conventions & gotchas
 
 - **Excel script columns**: `Séq. | Durée | Texte validé | Type de sortie | Intention | Visuel
-  recommandé | Prompt visuel`. `main.py`'s `_read_xlsx` flattens all cells naively; the real
-  workflow instead reads structured data into `sequences.json`.
-- **Per-video `config.json` is committed** (it holds project data: avatar/voice/fps/orientation,
-  no secrets). If it's missing, `main.py` falls back to the Emy/Audrey defaults. Relative paths
-  in it resolve against the video folder first, then the repo root (for shared `motion/`).
+  recommandé | Prompt visuel`. The real workflow reads structured data into `sequences.json`.
+- **Per-video `config.json` is committed** (avatar/voice/fps/orientation, no secrets). If it's
+  missing, tools fall back to the Emy/Audrey defaults. Relative paths in it resolve against the
+  video folder first, then the repo root (for `shared/`).
 - **HeyGen + Higgsfield MCPs need OAuth (`/mcp`) and disconnect/reconnect often.** If a `mcp__*`
   tool is missing, reconnect before assuming a capability is unavailable.
-- **HyperFrames render is always silent** — audio is muxed back with ffmpeg in a later step.
+- **HyperFrames render is always silent** — `emo.py render` muxes the audio back automatically.
 - **ffmpeg limits here**: `drawtext`/`montage` are not available. To review clips, extract
   mid-frames and build a `tile` contact sheet; label by grid position. Keep QA frames in
   `review_frames/` or `ov_frames/` inside the video folder (gitignored).
-- **Recover the Montserrat font from git** if missing:
-  `git show HEAD:projects/EMO03_VID01/public/vendor/fonts/Montserrat.ttf`.
+- **Recover the Montserrat font**: canonical copy at `shared/fonts/Montserrat.ttf`.
 - **Gitignored per video**: `output/`, `source-video/`, `heygen_clips/`, `higgsfield/stills|clips/`,
   `segments/`, `renders/`, `review_frames/`, `ov_frames/`, `snapshots/`, and all `*.mp4`/`*.mp3`.
   Committed video sources = xlsx/json/py/html/js/css + authored `public/assets` images.

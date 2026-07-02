@@ -15,6 +15,6 @@
     "composition_dir": "public"
   },
   "motion": {
-    "config": "motion/motion.config.json"
+    "config": "shared/motion/motion.config.json"
   }
 }
