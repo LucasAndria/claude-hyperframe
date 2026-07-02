@@ -1,22 +1,35 @@
-# ---- Local / machine-specific config ----
-config.json
+# ---- Local / machine-specific ----
 .claude/settings.local.json
 
 # ---- Installed agent skills (restore via skills-lock.json) ----
 .agents/
 .claude/skills/
 
-# ---- Large media: source + rendered output ----
-output/
-source-video/
+# ---- Legacy root locations (everything now lives in videos/<CODE>/) ----
+/config.json
+/output/
+/source-video/
 
-# Generated artifacts inside video compositions (keep source: html/js/css/py/assets)
+# ---- Per-video generated artifacts (keep source: xlsx/json/py/html/js/css, authored assets) ----
+videos/**/output/
+videos/**/source-video/
+videos/**/heygen_clips/
+videos/**/higgsfield/stills/
+videos/**/higgsfield/clips/
+videos/**/segments/
+videos/**/renders/
+videos/**/review_frames/
+videos/**/ov_frames/
+videos/**/snapshots/
 videos/**/_backup/
 videos/**/_final/
 videos/**/_frames/
 videos/**/_qa/
-videos/**/snapshots/
 videos/**/*.mp4
+videos/**/*.mp3
+videos/**/*.bak.*
+videos/**/overlay_check.png
+videos/**/still_contact.png
 
 # ---- Python ----
 __pycache__/
