@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""emo.py -la commande unique pour les projets video EMO (La Petite Creche).
+"""video.py -la commande unique pour les projets video EMO (La Petite Creche).
 
-    python emo.py status                  etat de tous les projets + prochaine etape
-    python emo.py new EMO15_VID01         creer un nouveau projet (dossier autonome)
-    python emo.py build EMO15_VID01       assembler la video de base (clips -> _1_base.mp4)
-    python emo.py render EMO15_VID01      rendre les overlays + remettre l'audio -> video finale
+    python video.py status                  etat de tous les projets + prochaine etape
+    python video.py new EMO15_VID01         creer un nouveau projet (dossier autonome)
+    python video.py build EMO15_VID01       assembler la video de base (clips -> _1_base.mp4)
+    python video.py render EMO15_VID01      rendre les overlays + remettre l'audio -> video finale
 
 Chaque projet est autonome dans projects/<CODE>/ ; aucune commande ne touche
 jamais au dossier d'un autre projet.
@@ -93,7 +93,7 @@ def cmd_new(args) -> int:
     print(f"  1. Placer le script valide dans projects/{args.code}/script.xlsx"
           + (" (deja copie)" if args.script else ""))
     print(f"  2. Dans Claude Code: \"Remplis sequences.json pour {args.code} a partir du script\"")
-    print(f"  3. Suivre l'avancement avec: python emo.py status")
+    print(f"  3. Suivre l'avancement avec: python video.py status")
     return 0
 
 
@@ -125,11 +125,11 @@ def project_status(video_dir: Path) -> dict:
     elif broll < n_broll:
         nxt = f"generer les b-roll Higgsfield ({broll}/{n_broll})"
     elif not st["base"]:
-        nxt = f"python emo.py build {name}"
+        nxt = f"python video.py build {name}"
     elif not st["comp"]:
         nxt = "creer les overlays (public/index.html, demander a Claude)"
     elif not st["final"]:
-        nxt = f"python emo.py render {name}"
+        nxt = f"python video.py render {name}"
     else:
         nxt = "TERMINE"
     st["next"] = nxt
@@ -139,7 +139,7 @@ def project_status(video_dir: Path) -> dict:
 def cmd_status(args) -> int:
     codes = [args.code] if args.code else list_videos()
     if not codes:
-        print("Aucun projet. Creer le premier: python emo.py new EMO15_VID01")
+        print("Aucun projet. Creer le premier: python video.py new EMO15_VID01")
         return 0
     mark = lambda b: "OK" if b else "--"
     print(f"{'PROJET':<14} {'script':<6} {'seq':<7} {'heygen':<7} {'broll':<6} "
@@ -211,7 +211,7 @@ def cmd_build(args) -> int:
          "-c:a", "aac", "-ar", "48000", "-ac", "2", "-b:a", "192k",
          "-movflags", "+faststart", str(base_out)], "Echec de la concatenation")
     print(f"BASE: {base_out} ({ffprobe_dur(base_out):.3f}s)")
-    print(f"Prochaine etape: overlays dans public/, puis: python emo.py render {name}")
+    print(f"Prochaine etape: overlays dans public/, puis: python video.py render {name}")
     return 0
 
 
@@ -227,7 +227,7 @@ def cmd_render(args) -> int:
 
     base = out_dir / f"{name}_1_base.mp4"
     if not base.exists():
-        raise PipelineError(f"Base introuvable: {base} -lancer d'abord: python emo.py build {name}")
+        raise PipelineError(f"Base introuvable: {base} -lancer d'abord: python video.py build {name}")
     comp = video_dir / (cfg.get("hyperframe", {}).get("composition_dir") or "public")
     if not (comp / "index.html").exists():
         raise PipelineError(f"Pas de composition dans {comp} -creer les overlays d'abord (demander a Claude).")
@@ -257,7 +257,7 @@ def cmd_render(args) -> int:
 # ---------------------------------------------------------------------------
 def main() -> int:
     parser = argparse.ArgumentParser(
-        prog="emo.py", description="La commande unique pour les projets video EMO.")
+        prog="video.py", description="La commande unique pour les projets video EMO.")
     sub = parser.add_subparsers(dest="command", required=True)
 
     p = sub.add_parser("new", help="creer un nouveau projet autonome dans projects/<CODE>/")
