@@ -2,13 +2,13 @@
 
 Ce guide s'adresse à toute l'équipe, aucune connaissance technique requise.
 Tout se passe dans **Claude Code** (ouvrir ce dossier, taper les phrases en
-gras) et avec **une seule commande** : `python video.py`.
+gras) et avec **une seule commande** : `python studio.py`.
 
 À tout moment, pour savoir où en est chaque vidéo et quelle est la prochaine
 étape :
 
 ```
-python video.py status
+python studio.py status
 ```
 
 ---
@@ -16,7 +16,7 @@ python video.py status
 ## Étape 1 — Créer le projet
 
 ```
-python video.py new EMO15_VID01 --script "chemin/vers/EMO15_VID01.xlsx"
+python studio.py new EMO15_VID01 --script "chemin/vers/EMO15_VID01.xlsx"
 ```
 
 Cela crée le dossier `projects/EMO15_VID01/` avec tout dedans : le script, la
@@ -51,7 +51,7 @@ arrivent dans `projects/EMO15_VID01/higgsfield/clips/`.
 ## Étape 5 — Assembler la vidéo de base
 
 ```
-python video.py build EMO15_VID01
+python studio.py build EMO15_VID01
 ```
 
 (ou demander : **Assemble la base de EMO15_VID01**). Résultat :
@@ -68,7 +68,7 @@ Claude compose l'habillage (mots-clés, titres, fondus) dans
 ## Étape 7 — Rendu final
 
 ```
-python video.py render EMO15_VID01
+python studio.py render EMO15_VID01
 ```
 
 La vidéo finale est là : **`projects/EMO15_VID01/output/EMO15_VID01.mp4`** 🎉
@@ -82,7 +82,7 @@ La vidéo finale est là : **`projects/EMO15_VID01/output/EMO15_VID01.mp4`** �
 | Un outil HeyGen/Higgsfield « n'existe pas » | `/mcp` pour reconnecter, puis redemander |
 | Le rendu HyperFrames échoue | `npx hyperframes doctor` |
 | `ffmpeg introuvable` | installer ffmpeg et l'ajouter au PATH |
-| Je ne sais plus où j'en suis | `python video.py status` |
+| Je ne sais plus où j'en suis | `python studio.py status` |
 
 Chaque projet est **autonome** dans `projects/<CODE>/` : script, config, clips,
 habillage et résultats. On peut travailler sur plusieurs vidéos en parallèle

@@ -10,9 +10,15 @@ MP4 by chaining: **HeyGen** avatar talking-head clips → **Higgsfield** AI b-ro
 scenes → **ffmpeg** assembly → **HyperFrames** HTML typographic overlays.
 
 The heavy lifting runs through **MCP tools driven by Claude inside Claude Code**; the
-mechanical steps run through **`video.py`**, the single CLI. `main.py` is a thin reference
+mechanical steps run through **`studio.py`**, the single CLI. `main.py` is a thin reference
 orchestrator whose HeyGen step is still a placeholder. `GUIDE.md` is the French step-by-step
 guide for the team — keep it in sync when the workflow changes.
+
+**`instruction.md` is the global AI production playbook — read it and follow it for every
+video task.** In particular its Rule 0: before ANY generation, make sure the project has a
+`CHECKLIST.md` (created by `studio.py new`; create it yourself on older projects) and update
+it at every single step — tick tasks the moment they finish, add per-sequence sub-tasks and
+retakes as they appear.
 
 ## One folder per video — the core rule
 
@@ -22,6 +28,7 @@ overwrite or delete another video's folder when starting a new one.
 
 ```
 projects/<CODE>/
+├── CHECKLIST.md           living task list (instruction.md Rule 0) — COMMITTED
 ├── config.json            per-video settings (avatar, voice, fps, orientation) — COMMITTED
 ├── script.xlsx            validated Excel script — COMMITTED
 ├── sequences.json         structured source of truth — COMMITTED
@@ -33,15 +40,15 @@ projects/<CODE>/
 ```
 
 Shared at the root: `shared/` (motion library, Montserrat, GSAP, `brand.md` — auto-staged
-into new projects), `video.py`, `main.py`, `GUIDE.md`.
+into new projects), `studio.py`, `main.py`, `GUIDE.md`.
 
-## Commands — `video.py` is the single entry point
+## Commands — `studio.py` is the single entry point
 
 ```bash
-python video.py status              # dashboard: every project + its next step
-python video.py new <CODE> [--script path.xlsx] [--vertical]   # scaffold a project
-python video.py build <CODE>       # assemble base edit -> projects/<CODE>/output/<CODE>_1_base.mp4
-python video.py render <CODE>      # render overlays (silent) + mux base audio -> final <CODE>.mp4
+python studio.py status              # dashboard: every project + its next step
+python studio.py new <CODE> [--script path.xlsx] [--vertical]   # scaffold a project
+python studio.py build <CODE>       # assemble base edit -> projects/<CODE>/output/<CODE>_1_base.mp4
+python studio.py render <CODE>      # render overlays (silent) + mux base audio -> final <CODE>.mp4
 
 npx hyperframes doctor            # troubleshoot the Node/Chrome render environment
 python main.py <CODE>            # reference orchestrator (HeyGen step is a placeholder)
@@ -49,7 +56,7 @@ pip install openpyxl              # required to read .xlsx scripts
 ```
 
 There are no tests, linters, or a package.json — `hyperframes` runs via `npx`.
-ffmpeg and ffprobe must be on PATH. Run `python video.py status` first to see where a
+ffmpeg and ffprobe must be on PATH. Run `python studio.py status` first to see where a
 project stands before doing anything.
 
 ## The proven per-video workflow (see `projects/EMO14_VID01/` — the template)
@@ -64,25 +71,25 @@ project stands before doing anything.
 - **Higgsfield** for `broll` rows → build ONE reference-family still (nano_banana_2), save it as
   a reusable **Element**, generate per-beat stills referencing that element, animate each with
   Seedance 2.0 image-to-video (`generate_audio:false`) → `higgsfield/clips/brollNN.mp4`.
-- **`video.py build`** — assembles the edit: `emy` segments used as-is; `broll` segments take
+- **`studio.py build`** — assembles the edit: `emy` segments used as-is; `broll` segments take
   video from the b-roll trimmed to the HeyGen clip's exact duration + audio from the HeyGen clip
   (Emy VO). Everything normalised (1920×1080 or 1080×1920 if vertical / fps from config / h264
   yuv420p / aac 48k stereo), then concatenated → `output/<CODE>_1_base.mp4`.
 - **HyperFrames overlays** — `public/index.html` is a `graphic-overlays` composition: base video
   full-bleed throughout (as `public/input-video.mp4`), ~8 restrained typographic beats following
   `shared/brand.md` (Montserrat, cream/terracotta palette, gentle fades, scrims for legibility).
-- **`video.py render`** — refreshes `public/input-video.mp4` from the base, renders the
+- **`studio.py render`** — refreshes `public/input-video.mp4` from the base, renders the
   composition silent, then ffmpeg-muxes the base audio → `output/<CODE>.mp4`.
 
 ## Shared assets (`shared/`)
 
 - `shared/motion/` — reusable, deterministic **reference-explainer** motion library
   (`reference-motion.js`, exposes `window.RefMotion`; restrained push-ins, parallax, clean
-  card/PIP reveals). Staged into each composition's `public/vendor/` by `video.py new`, `video.py
+  card/PIP reveals). Staged into each composition's `public/vendor/` by `studio.py new`, `studio.py
   render`, and `main.py`. Tune intensity globally in `shared/motion/motion.config.json`
   (`intensity`, default 0.65 — subtle). Worked example in `shared/motion/example/`.
 - `shared/fonts/Montserrat.ttf`, `shared/vendor/gsap.min.js` — copied into each new project's
-  `public/` by `video.py new`.
+  `public/` by `studio.py new`.
 - `shared/brand.md` — palette (cream `#fbf6ef`, terracotta `#d98b63`, muted `#d8cabb`, ink
   `#271c16`), typography, and overlay-style rules. Follow it in every composition.
 
@@ -95,7 +102,7 @@ project stands before doing anything.
   video folder first, then the repo root (for `shared/`).
 - **HeyGen + Higgsfield MCPs need OAuth (`/mcp`) and disconnect/reconnect often.** If a `mcp__*`
   tool is missing, reconnect before assuming a capability is unavailable.
-- **HyperFrames render is always silent** — `video.py render` muxes the audio back automatically.
+- **HyperFrames render is always silent** — `studio.py render` muxes the audio back automatically.
 - **ffmpeg limits here**: `drawtext`/`montage` are not available. To review clips, extract
   mid-frames and build a `tile` contact sheet; label by grid position. Keep QA frames in
   `review_frames/` or `ov_frames/` inside the video folder (gitignored).

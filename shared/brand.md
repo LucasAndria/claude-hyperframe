@@ -2,7 +2,7 @@
 
 Référence unique pour toutes les compositions HyperFrames. Les assets de ce
 dossier (`shared/`) sont copiés automatiquement dans chaque nouveau projet par
-`python video.py new`.
+`python studio.py new`.
 
 ## Palette
 

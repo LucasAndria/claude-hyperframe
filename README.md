@@ -2,19 +2,21 @@
 
 Local automation for **La Petite Crèche** EMO videos: each video is a fully
 self-contained project folder under `projects/<CODE>/`, driven by **one
-command** — `python video.py`. The pipeline turns a per-video Excel script into a
+command** — `python studio.py`. The pipeline turns a per-video Excel script into a
 finished MP4: HeyGen avatar clips → Higgsfield b-roll → ffmpeg assembly →
 HyperFrames typographic overlays.
 
 **Non-technical team members: read [GUIDE.md](GUIDE.md) (French, step by step).**
+The AI production rules live in [instruction.md](instruction.md) — every project
+keeps a living `CHECKLIST.md` that is updated at each step.
 
 ## The one command
 
 ```bash
-python video.py status                  # every project + its next step
-python video.py new EMO15_VID01        # scaffold a new self-contained project
-python video.py build EMO15_VID01      # assemble the base edit from the clips
-python video.py render EMO15_VID01     # render overlays + mux audio -> final MP4
+python studio.py status                  # every project + its next step
+python studio.py new EMO15_VID01        # scaffold a new self-contained project
+python studio.py build EMO15_VID01      # assemble the base edit from the clips
+python studio.py render EMO15_VID01     # render overlays + mux audio -> final MP4
 ```
 
 `status` example:
@@ -37,13 +39,13 @@ projects/<CODE>/                e.g. projects/EMO14_VID01/
 ├── source-video/               (alt) drop a pre-recorded base clip here       [gitignored]
 ├── public/                     HyperFrames overlay composition (index.html)
 └── output/                     ALL rendered results for this video            [gitignored]
-    ├── <CODE>_1_base.mp4       assembled base edit        (video.py build)
-    ├── <CODE>_2_overlay.mp4    silent HyperFrames render  (video.py render)
-    └── <CODE>.mp4              final video                (video.py render)
+    ├── <CODE>_1_base.mp4       assembled base edit        (studio.py build)
+    ├── <CODE>_2_overlay.mp4    silent HyperFrames render  (studio.py render)
+    └── <CODE>.mp4              final video                (studio.py render)
 ```
 
 Shared, reusable pieces live in `shared/` — staged automatically into every new
-project by `video.py new`:
+project by `studio.py new`:
 
 - `shared/motion/` — deterministic reference-explainer motion library (`window.RefMotion`)
 - `shared/fonts/Montserrat.ttf` + `shared/vendor/gsap.min.js` — brand font & animation lib
@@ -53,18 +55,18 @@ Starting a new video **never touches another video's files**.
 
 ## Production workflow
 
-1. `python video.py new <CODE> --script <file.xlsx>` — scaffold the project.
+1. `python studio.py new <CODE> --script <file.xlsx>` — scaffold the project.
 2. In Claude Code: *"Remplis sequences.json pour `<CODE>`"* — Claude structures
    the Excel script into sequences (Emy on-camera vs. b-roll).
 3. *"Génère les clips HeyGen pour `<CODE>`"* — one clip per sequence via the
    HeyGen MCP (avatar Emy, French voice Audrey).
 4. *"Génère les b-roll Higgsfield pour `<CODE>`"* — consistent visual family,
    animated with Seedance image-to-video.
-5. `python video.py build <CODE>` — ffmpeg assembles the edit (b-roll video +
+5. `python studio.py build <CODE>` — ffmpeg assembles the edit (b-roll video +
    Emy VO, everything normalised and concatenated).
 6. *"Crée les overlays HyperFrames pour `<CODE>`"* — Claude authors the
    typographic overlay composition in `public/`.
-7. `python video.py render <CODE>` — renders the overlays (silent) and muxes the
+7. `python studio.py render <CODE>` — renders the overlays (silent) and muxes the
    base audio back in → `projects/<CODE>/output/<CODE>.mp4`.
 
 `main.py` remains as a thin reference orchestrator (`python main.py <CODE>`);

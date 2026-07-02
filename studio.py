@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""video.py -la commande unique pour les projets video EMO (La Petite Creche).
+"""studio.py -la commande unique pour les projets video EMO (La Petite Creche).
 
-    python video.py status                  etat de tous les projets + prochaine etape
-    python video.py new EMO15_VID01         creer un nouveau projet (dossier autonome)
-    python video.py build EMO15_VID01       assembler la video de base (clips -> _1_base.mp4)
-    python video.py render EMO15_VID01      rendre les overlays + remettre l'audio -> video finale
+    python studio.py status                  etat de tous les projets + prochaine etape
+    python studio.py new EMO15_VID01         creer un nouveau projet (dossier autonome)
+    python studio.py build EMO15_VID01       assembler la video de base (clips -> _1_base.mp4)
+    python studio.py render EMO15_VID01      rendre les overlays + remettre l'audio -> video finale
 
 Chaque projet est autonome dans projects/<CODE>/ ; aucune commande ne touche
 jamais au dossier d'un autre projet.
@@ -21,6 +21,27 @@ from main import (DEFAULT_CONFIG, PROJECTS_DIR, ROOT, PipelineError, list_videos
                   load_config, process_with_ffmpeg, resolve_video_dir, stage_motion_assets)
 
 SHARED = ROOT / "shared"
+
+CHECKLIST_TEMPLATE = """# CHECKLIST — {code}
+
+> Regle (voir instruction.md) : cocher chaque tache DES qu'elle est terminee,
+> et ajouter les sous-taches decouvertes (une ligne par sequence des que
+> sequences.json est rempli, retakes, corrections). Ne jamais lancer une
+> generation sans lire cette liste, ni finir une etape sans la mettre a jour.
+
+- [ ] 1. Script valide place dans script.xlsx
+- [ ] 2. sequences.json rempli depuis le script (role emy/broll par sequence)
+- [ ] 3. Clips HeyGen generes (un par sequence -> heygen_clips/seqNN.mp4)
+- [ ] 4. Clips HeyGen relus (contact sheet) — retakes refaits si besoin
+- [ ] 5. Still de reference + Element Higgsfield crees (famille visuelle unique)
+- [ ] 6. B-roll generes pour chaque sequence broll (higgsfield/clips/brollNN.mp4)
+- [ ] 7. B-roll relus — style coherent sur toute la video
+- [ ] 8. Base assemblee : python studio.py build {code}
+- [ ] 9. Base relue (contact sheet timeline + synchro audio)
+- [ ] 10. Motion graphics dans public/index.html (apres validation de la base, charte shared/brand.md)
+- [ ] 11. Rendu final : python studio.py render {code}
+- [ ] 12. QA finale (frames aux moments cles, duree, audio) -> TERMINE
+"""
 
 SEQUENCES_STUB = {
     "title": "",
@@ -73,6 +94,9 @@ def cmd_new(args) -> int:
         json.dumps({**SEQUENCES_STUB, "title": args.code}, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8")
 
+    (video_dir / "CHECKLIST.md").write_text(
+        CHECKLIST_TEMPLATE.format(code=args.code), encoding="utf-8")
+
     # Stage the shared brand assets so every composition starts ready:
     # motion library + style, Montserrat, GSAP.
     public = video_dir / "public"
@@ -89,11 +113,11 @@ def cmd_new(args) -> int:
             raise PipelineError(f"Script introuvable: {src}")
         shutil.copyfile(src, video_dir / f"script{src.suffix.lower()}")
 
-    print(f"Projet cree: projects/{args.code}/")
+    print(f"Projet cree: projects/{args.code}/ (checklist: CHECKLIST.md)")
     print(f"  1. Placer le script valide dans projects/{args.code}/script.xlsx"
           + (" (deja copie)" if args.script else ""))
     print(f"  2. Dans Claude Code: \"Remplis sequences.json pour {args.code} a partir du script\"")
-    print(f"  3. Suivre l'avancement avec: python video.py status")
+    print(f"  3. Suivre l'avancement avec: python studio.py status")
     return 0
 
 
@@ -125,11 +149,11 @@ def project_status(video_dir: Path) -> dict:
     elif broll < n_broll:
         nxt = f"generer les b-roll Higgsfield ({broll}/{n_broll})"
     elif not st["base"]:
-        nxt = f"python video.py build {name}"
+        nxt = f"python studio.py build {name}"
     elif not st["comp"]:
         nxt = "creer les overlays (public/index.html, demander a Claude)"
     elif not st["final"]:
-        nxt = f"python video.py render {name}"
+        nxt = f"python studio.py render {name}"
     else:
         nxt = "TERMINE"
     st["next"] = nxt
@@ -139,7 +163,7 @@ def project_status(video_dir: Path) -> dict:
 def cmd_status(args) -> int:
     codes = [args.code] if args.code else list_videos()
     if not codes:
-        print("Aucun projet. Creer le premier: python video.py new EMO15_VID01")
+        print("Aucun projet. Creer le premier: python studio.py new EMO15_VID01")
         return 0
     mark = lambda b: "OK" if b else "--"
     print(f"{'PROJET':<14} {'script':<6} {'seq':<7} {'heygen':<7} {'broll':<6} "
@@ -211,7 +235,7 @@ def cmd_build(args) -> int:
          "-c:a", "aac", "-ar", "48000", "-ac", "2", "-b:a", "192k",
          "-movflags", "+faststart", str(base_out)], "Echec de la concatenation")
     print(f"BASE: {base_out} ({ffprobe_dur(base_out):.3f}s)")
-    print(f"Prochaine etape: overlays dans public/, puis: python video.py render {name}")
+    print(f"Prochaine etape: overlays dans public/, puis: python studio.py render {name}")
     return 0
 
 
@@ -227,7 +251,7 @@ def cmd_render(args) -> int:
 
     base = out_dir / f"{name}_1_base.mp4"
     if not base.exists():
-        raise PipelineError(f"Base introuvable: {base} -lancer d'abord: python video.py build {name}")
+        raise PipelineError(f"Base introuvable: {base} -lancer d'abord: python studio.py build {name}")
     comp = video_dir / (cfg.get("hyperframe", {}).get("composition_dir") or "public")
     if not (comp / "index.html").exists():
         raise PipelineError(f"Pas de composition dans {comp} -creer les overlays d'abord (demander a Claude).")
@@ -257,7 +281,7 @@ def cmd_render(args) -> int:
 # ---------------------------------------------------------------------------
 def main() -> int:
     parser = argparse.ArgumentParser(
-        prog="video.py", description="La commande unique pour les projets video EMO.")
+        prog="studio.py", description="La commande unique pour les projets video EMO.")
     sub = parser.add_subparsers(dest="command", required=True)
 
     p = sub.add_parser("new", help="creer un nouveau projet autonome dans projects/<CODE>/")
