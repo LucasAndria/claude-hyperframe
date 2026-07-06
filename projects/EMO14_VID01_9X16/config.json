@@ -1,0 +1,21 @@
+{
+  "source": "avatar",
+  "script_file": "script.xlsx",
+  "output_dir": "output",
+  "orientation": "vertical",
+  "encoder": "gpu",
+  "heygen": {
+    "avatar_id": "75255783465d403696e639a249a0b9c0",
+    "voice_id": "7459d7aa599b4f97908600896a0e7ef4"
+  },
+  "source_video": {
+    "file": "source-video/input.mp4"
+  },
+  "hyperframe": {
+    "fps": 25,
+    "composition_dir": "public"
+  },
+  "motion": {
+    "config": "shared/motion/motion.config.json"
+  }
+}

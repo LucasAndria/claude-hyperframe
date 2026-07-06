@@ -23,6 +23,7 @@ projects/**/ov_frames/
 projects/**/snapshots/
 projects/**/_backup/
 projects/**/_final/
+projects/**/final/
 projects/**/_frames/
 projects/**/_qa/
 projects/**/*.mp4

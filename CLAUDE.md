@@ -36,7 +36,8 @@ projects/<CODE>/
 ├── higgsfield/            stills/ + clips/ + *_ids.json               [media gitignored]
 ├── source-video/          (alt) pre-recorded base clip                [gitignored]
 ├── public/                HyperFrames overlay composition — COMMITTED (html/js/fonts)
-└── output/                <CODE>_1_base.mp4, <CODE>_2_overlay.mp4, <CODE>.mp4  [gitignored]
+├── output/                intermediates only: <CODE>_1_base.mp4, <CODE>_2_overlay.mp4  [gitignored]
+└── final/                 the delivered <CODE>.mp4 — moved here after render  [gitignored]
 ```
 
 Shared at the root: `shared/` (motion library, Montserrat, GSAP, `brand.md` — auto-staged

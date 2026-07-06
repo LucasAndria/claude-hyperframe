@@ -18,7 +18,8 @@ import sys
 from pathlib import Path
 
 from main import (DEFAULT_CONFIG, PROJECTS_DIR, ROOT, PipelineError, list_videos,
-                  load_config, process_with_ffmpeg, resolve_video_dir, stage_motion_assets)
+                  load_config, process_with_ffmpeg, resolve_video_dir, stage_motion_assets,
+                  video_codec_args)
 
 SHARED = ROOT / "shared"
 
@@ -210,8 +211,7 @@ def cmd_build(args) -> int:
             raise PipelineError(f"Clip HeyGen manquant: {heygen} -generer les clips d'abord.")
         dur = ffprobe_dur(heygen)
         seg = work / f"seg{n:02d}.mp4"
-        common = ["-vf", vf, "-r", str(fps),
-                  "-c:v", "libx264", "-crf", "18", "-preset", "medium", "-pix_fmt", "yuv420p",
+        common = ["-vf", vf, "-r", str(fps)] + video_codec_args(cfg) + ["-pix_fmt", "yuv420p",
                   "-c:a", "aac", "-ar", "48000", "-ac", "2", "-b:a", "192k",
                   "-t", f"{dur:.3f}", str(seg)]
         if role == "emy":
@@ -230,10 +230,10 @@ def cmd_build(args) -> int:
     listfile = work / "concat.txt"
     listfile.write_text("".join(f"file '{p.as_posix()}'\n" for p in seg_files), encoding="utf-8")
     base_out = out_dir / f"{name}_1_base.mp4"
-    run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(listfile),
-         "-c:v", "libx264", "-crf", "18", "-preset", "medium", "-pix_fmt", "yuv420p",
-         "-c:a", "aac", "-ar", "48000", "-ac", "2", "-b:a", "192k",
-         "-movflags", "+faststart", str(base_out)], "Echec de la concatenation")
+    run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(listfile)]
+        + video_codec_args(cfg) + ["-pix_fmt", "yuv420p",
+        "-c:a", "aac", "-ar", "48000", "-ac", "2", "-b:a", "192k",
+        "-movflags", "+faststart", str(base_out)], "Echec de la concatenation")
     print(f"BASE: {base_out} ({ffprobe_dur(base_out):.3f}s)")
     print(f"Prochaine etape: overlays dans public/, puis: python studio.py render {name}")
     return 0
@@ -273,7 +273,7 @@ def cmd_render(args) -> int:
 
     final = out_dir / f"{name}.mp4"
     print(f"Muxage de l'audio de la base -> {final.name} ...")
-    process_with_ffmpeg(overlay, final, audio_from=base)
+    process_with_ffmpeg(overlay, final, audio_from=base, cfg=cfg)
     print(f"FINAL: {final} ({ffprobe_dur(final):.3f}s)")
     return 0
 

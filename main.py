@@ -35,6 +35,7 @@ DEFAULT_CONFIG = {
     "script_file": "script.xlsx",
     "output_dir": "output",
     "orientation": "horizontal",
+    "encoder": "gpu",  # "cpu" (libx264) or "gpu" (h264_nvenc, requires an NVIDIA GPU)
     "heygen": {
         # Emy + French female voice Audrey (La Petite Creche defaults)
         "avatar_id": "75255783465d403696e639a249a0b9c0",
@@ -48,6 +49,17 @@ DEFAULT_CONFIG = {
 
 class PipelineError(Exception):
     """Any expected, handled failure in the pipeline."""
+
+
+def video_codec_args(cfg: dict, crf: int = 18) -> list[str]:
+    """ffmpeg video-codec args, picked via config.json's "encoder": "cpu" | "gpu".
+
+    "gpu" uses NVENC (-cq mirrors -crf: lower is higher quality); requires an
+    NVIDIA GPU + an ffmpeg build with h264_nvenc.
+    """
+    if str(cfg.get("encoder", "cpu")).strip().lower() == "gpu":
+        return ["-c:v", "h264_nvenc", "-preset", "p5", "-rc", "vbr", "-cq", str(crf), "-b:v", "0"]
+    return ["-c:v", "libx264", "-crf", str(crf), "-preset", "medium"]
 
 
 def list_videos() -> list[str]:
@@ -265,7 +277,8 @@ def enhance_with_hyperframe(in_path: Path, video_dir: Path, cfg: dict, out_path:
 # ---------------------------------------------------------------------------
 # Step 3: ffmpeg processing (ensure clean MP4)
 # ---------------------------------------------------------------------------
-def process_with_ffmpeg(in_path: Path, out_path: Path, audio_from: Path | None = None) -> Path:
+def process_with_ffmpeg(in_path: Path, out_path: Path, audio_from: Path | None = None,
+                         cfg: dict | None = None) -> Path:
     """Produce a clean MP4 (H.264/AAC, faststart).
 
     If audio_from is given, take video from in_path and audio from that file —
@@ -281,7 +294,8 @@ def process_with_ffmpeg(in_path: Path, out_path: Path, audio_from: Path | None =
     cmd = ["ffmpeg", "-y", "-i", str(in_path)]
     if audio_from and audio_from.exists():
         cmd += ["-i", str(audio_from), "-map", "0:v:0", "-map", "1:a:0", "-shortest"]
-    cmd += ["-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-movflags", "+faststart", str(out_path)]
+    cmd += video_codec_args(cfg or {}) + ["-pix_fmt", "yuv420p", "-c:a", "aac",
+                                           "-movflags", "+faststart", str(out_path)]
     try:
         subprocess.run(cmd, check=True, capture_output=True, text=True)
     except subprocess.CalledProcessError as e:
@@ -323,7 +337,7 @@ def main() -> int:
         enhanced = enhance_with_hyperframe(raw, video_dir, cfg, out_dir / f"{name}_2_hyperframe.mp4")
         # Hyperframe render is silent — mux the audio from the base video
         # (HeyGen narration, or the source video's own audio).
-        final = process_with_ffmpeg(enhanced, out_dir / f"{name}.mp4", audio_from=raw)
+        final = process_with_ffmpeg(enhanced, out_dir / f"{name}.mp4", audio_from=raw, cfg=cfg)
 
         log.info("Done. Final video: %s", final)
         return 0
