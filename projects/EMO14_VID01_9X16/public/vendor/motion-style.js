@@ -1,1 +1,0 @@
-window.MOTION_STYLE = {"name": "reference_explainer", "intensity": 0.65, "cameraMotion": "subtle", "transitionStyle": "editorial", "allowRotation": false, "pipStyle": "rounded_stable", "screenRecordingMotion": "readable_slow"};

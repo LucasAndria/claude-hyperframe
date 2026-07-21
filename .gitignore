@@ -32,6 +32,9 @@ projects/**/*.bak.*
 projects/**/overlay_check.png
 projects/**/still_contact.png
 
+# ---- Node (per-project HyperFrames CLI) ----
+node_modules/
+
 # ---- Python ----
 __pycache__/
 *.py[cod]

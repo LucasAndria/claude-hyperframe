@@ -139,7 +139,7 @@ def project_status(video_dir: Path) -> dict:
         "n_seq": n_seq, "n_broll": n_broll, "heygen": heygen, "broll": broll,
         "base": (out / f"{name}_1_base.mp4").exists(),
         "comp": (video_dir / "public" / "index.html").exists(),
-        "final": (out / f"{name}.mp4").exists(),
+        "final": (video_dir / "final" / f"{name}.mp4").exists() or (out / f"{name}.mp4").exists(),
     }
     if not st["script"]:
         nxt = "ajouter le script (script.xlsx)"

@@ -4,111 +4,78 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-A local, Claude-driven video pipeline for **La Petite Crèche** "EMO" emotional-parenting
-explainer videos (EMO03, EMO07, EMO14, …). It turns a per-video Excel script into a finished
-MP4 by chaining: **HeyGen** avatar talking-head clips → **Higgsfield** AI b-roll for non-avatar
-scenes → **ffmpeg** assembly → **HyperFrames** HTML typographic overlays.
+The video production workspace for **La Petite Crèche**. Every video is a self-contained
+project folder under `projects/`, built and rendered with **HyperFrames** (HTML → video).
 
-The heavy lifting runs through **MCP tools driven by Claude inside Claude Code**; the
-mechanical steps run through **`studio.py`**, the single CLI. `main.py` is a thin reference
-orchestrator whose HeyGen step is still a placeholder. `GUIDE.md` is the French step-by-step
-guide for the team — keep it in sync when the workflow changes.
+## Creating and working on videos — the HyperFrames skills own the flow
 
-**`instruction.md` is the global AI production playbook — read it and follow it for every
-video task.** In particular its Rule 0: before ANY generation, make sure the project has a
-`CHECKLIST.md` (created by `studio.py new`; create it yourself on older projects) and update
-it at every single step — tick tasks the moment they finish, add per-sequence sub-tasks and
-retakes as they appear.
+**Any request to make, edit, or render a video starts at the `/hyperframes` skill.** It
+confirms the brief (intent layer), routes to the owning workflow (`/motion-graphics`,
+`/general-video`, `/faceless-explainer`, …), and that workflow drives everything:
+`hyperframes init` scaffold, `BRIEF.md`, composition authoring, `check`, preview,
+approval gate, render. Do not re-invent this flow from repo docs — the skills are the
+source of truth for how a video gets made.
 
-## One folder per video — the core rule
+**One repo-level override**: the skills default to `videos/<project-name>/`; here every
+project lives in **`projects/<CODE>/`** instead. Scaffold with
+`npx hyperframes init projects/<CODE> --non-interactive --example=blank` and keep
+everything belonging to that video inside its folder. NEVER put per-video files at the
+repo root, and NEVER touch another video's folder.
 
-**Everything belonging to a video lives in `projects/<CODE>/`** (script, config, sequences,
-generated clips, composition, output). NEVER put per-video files at the repo root, and NEVER
-overwrite or delete another video's folder when starting a new one.
+A typical skill-built project (see `projects/NEXT10S/` — a complete worked example):
 
 ```
 projects/<CODE>/
-├── CHECKLIST.md           living task list (instruction.md Rule 0) — COMMITTED
-├── config.json            per-video settings (avatar, voice, fps, orientation) — COMMITTED
-├── script.xlsx            validated Excel script — COMMITTED
-├── sequences.json         structured source of truth — COMMITTED
-├── heygen_clips/          seqNN.mp4 (HeyGen MCP)                      [gitignored]
-├── higgsfield/            stills/ + clips/ + *_ids.json               [media gitignored]
-├── source-video/          (alt) pre-recorded base clip                [gitignored]
-├── public/                HyperFrames overlay composition — COMMITTED (html/js/fonts)
-├── output/                intermediates only: <CODE>_1_base.mp4, <CODE>_2_overlay.mp4  [gitignored]
-└── final/                 the delivered <CODE>.mp4 — moved here after render  [gitignored]
+├── BRIEF.md            confirmed intent (written by the workflow) — COMMITTED
+├── CHECKLIST.md        living task list, ticked at every step — COMMITTED
+├── hyperframes.json    project config (written by init) — COMMITTED
+├── index.html          the composition — COMMITTED (+ fonts/, vendor/, compositions/)
+├── shot-plan.json      workflow IR, when the workflow produces one — COMMITTED
+├── snapshots/          proof frames / contact sheets              [gitignored]
+├── renders/            rendered MP4s                              [gitignored]
+└── final/              the delivered <CODE>.mp4                   [gitignored]
 ```
 
-Shared at the root: `shared/` (motion library, Montserrat, GSAP, `brand.md` — auto-staged
-into new projects), `studio.py`, `main.py`, `GUIDE.md`.
+The final deliverable never sits next to intermediates: copy it to
+`projects/<CODE>/final/<CODE>.mp4` and point the user there.
 
-## Commands — `studio.py` is the single entry point
-
-```bash
-python studio.py status              # dashboard: every project + its next step
-python studio.py new <CODE> [--script path.xlsx] [--vertical]   # scaffold a project
-python studio.py build <CODE>       # assemble base edit -> projects/<CODE>/output/<CODE>_1_base.mp4
-python studio.py render <CODE>      # render overlays (silent) + mux base audio -> final <CODE>.mp4
-
-npx hyperframes doctor            # troubleshoot the Node/Chrome render environment
-python main.py <CODE>            # reference orchestrator (HeyGen step is a placeholder)
-pip install openpyxl              # required to read .xlsx scripts
-```
-
-There are no tests, linters, or a package.json — `hyperframes` runs via `npx`.
-ffmpeg and ffprobe must be on PATH. Run `python studio.py status` first to see where a
-project stands before doing anything.
-
-## The proven per-video workflow (see `projects/EMO14_VID01/` — the template)
-
-- `sequences.json` — the source of truth: title, avatar_id, voice_id, fps, and an array of
-  numbered sequences. Each sequence has `role: "emy"` (on-camera avatar talking head) or
-  `role: "broll"` (Higgsfield b-roll with Emy's VO kept over it), plus script/intention/visual.
-- **HeyGen** (`create_video_from_avatar`, one call per sequence) → `heygen_clips/seqNN.mp4`.
-  Avatar **Emy** (`75255783465d403696e639a249a0b9c0`), French female voice **Audrey**
-  (`7459d7aa599b4f97908600896a0e7ef4`). 16:9, 1080p, no captions. Inclusive endings voiced
-  feminine ("épuisée") since the voice is female.
-- **Higgsfield** for `broll` rows → build ONE reference-family still (nano_banana_2), save it as
-  a reusable **Element**, generate per-beat stills referencing that element, animate each with
-  Seedance 2.0 image-to-video (`generate_audio:false`) → `higgsfield/clips/brollNN.mp4`.
-- **`studio.py build`** — assembles the edit: `emy` segments used as-is; `broll` segments take
-  video from the b-roll trimmed to the HeyGen clip's exact duration + audio from the HeyGen clip
-  (Emy VO). Everything normalised (1920×1080 or 1080×1920 if vertical / fps from config / h264
-  yuv420p / aac 48k stereo), then concatenated → `output/<CODE>_1_base.mp4`.
-- **HyperFrames overlays** — `public/index.html` is a `graphic-overlays` composition: base video
-  full-bleed throughout (as `public/input-video.mp4`), ~8 restrained typographic beats following
-  `shared/brand.md` (Montserrat, cream/terracotta palette, gentle fades, scrims for legibility).
-- **`studio.py render`** — refreshes `public/input-video.mp4` from the base, renders the
-  composition silent, then ffmpeg-muxes the base audio → `output/<CODE>.mp4`.
+Useful commands (per project, from its folder): `npm run dev` (preview server — always
+background), `npm run check`, `npx hyperframes render . -q high -o ./renders/video.mp4`,
+`npx hyperframes doctor`. Media (SFX, music, images, icons, TTS, grades) resolves through
+the `media-use` skill; HyperFrames compositions render without audio unless the
+composition includes it — mux sound with ffmpeg afterwards when the piece needs it.
 
 ## Shared assets (`shared/`)
 
-- `shared/motion/` — reusable, deterministic **reference-explainer** motion library
-  (`reference-motion.js`, exposes `window.RefMotion`; restrained push-ins, parallax, clean
-  card/PIP reveals). Staged into each composition's `public/vendor/` by `studio.py new`, `studio.py
-  render`, and `main.py`. Tune intensity globally in `shared/motion/motion.config.json`
-  (`intensity`, default 0.65 — subtle). Worked example in `shared/motion/example/`.
-- `shared/fonts/Montserrat.ttf`, `shared/vendor/gsap.min.js` — copied into each new project's
-  `public/` by `studio.py new`.
-- `shared/brand.md` — palette (cream `#fbf6ef`, terracotta `#d98b63`, muted `#d8cabb`, ink
-  `#271c16`), typography, and overlay-style rules. Follow it in every composition.
+- `shared/fonts/Montserrat.ttf` — canonical brand font (variable, 100–900); copy into a
+  project's `fonts/` and declare with a local `@font-face`.
+- `shared/vendor/gsap.min.js` — local GSAP; copy into a project's `vendor/` (no CDN).
+- `shared/brand.md` — palette (cream `#fbf6ef`, terracotta `#d98b63`, muted `#d8cabb`,
+  ink `#271c16`), typography, and overlay-style rules for La Petite Crèche brand videos.
+  Follow it when the video is for the brand; a non-brand piece may define its own palette
+  in its BRIEF.
+- `shared/motion/` — deterministic reference-explainer motion library
+  (`reference-motion.js`, `window.RefMotion`) used by the legacy overlay pipeline.
+
+## Legacy EMO avatar pipeline (scoped — only for `config.json` + `sequences.json` projects)
+
+The EMO explainer videos (EMO03, EMO07, EMO14, …) were produced by an Excel-script avatar
+pipeline: HeyGen avatar clips → AI b-roll → `python studio.py build` (ffmpeg assembly) →
+HyperFrames overlay in `public/` → `python studio.py render`. Its rules live in
+**`instruction.md`** and the French team guide **`GUIDE.md`**, and apply ONLY to projects
+that carry `config.json` + `script.xlsx` + `sequences.json`. `python studio.py status`
+shows the dashboard for those projects; `main.py` is a thin reference orchestrator.
+Do NOT apply this pipeline — or `studio.py` — to HyperFrames-native projects, and do not
+apply the HyperFrames workflow docs to a legacy resume: each flow is self-contained.
 
 ## Conventions & gotchas
 
-- **Excel script columns**: `Séq. | Durée | Texte validé | Type de sortie | Intention | Visuel
-  recommandé | Prompt visuel`. The real workflow reads structured data into `sequences.json`.
-- **Per-video `config.json` is committed** (avatar/voice/fps/orientation, no secrets). If it's
-  missing, tools fall back to the Emy/Audrey defaults. Relative paths in it resolve against the
-  video folder first, then the repo root (for `shared/`).
-- **HeyGen + Higgsfield MCPs need OAuth (`/mcp`) and disconnect/reconnect often.** If a `mcp__*`
-  tool is missing, reconnect before assuming a capability is unavailable.
-- **HyperFrames render is always silent** — `studio.py render` muxes the audio back automatically.
-- **ffmpeg limits here**: `drawtext`/`montage` are not available. To review clips, extract
-  mid-frames and build a `tile` contact sheet; label by grid position. Keep QA frames in
-  `review_frames/` or `ov_frames/` inside the video folder (gitignored).
-- **Recover the Montserrat font**: canonical copy at `shared/fonts/Montserrat.ttf`.
-- **Gitignored per video**: `output/`, `source-video/`, `heygen_clips/`, `higgsfield/stills|clips/`,
-  `segments/`, `renders/`, `review_frames/`, `ov_frames/`, `snapshots/`, and all `*.mp4`/`*.mp3`.
-  Committed video sources = xlsx/json/py/html/js/css + authored `public/assets` images.
-  Installed skills are restored from `skills-lock.json`.
+- **ffmpeg limits here**: `drawtext`/`montage` are not available. To review clips,
+  extract mid-frames and build a `tile` contact sheet; label by grid position. Keep QA
+  frames in `review_frames/` or `snapshots/` inside the video folder (gitignored).
+- **Gitignored per video**: `output/`, `source-video/`, `heygen_clips/`,
+  `higgsfield/stills|clips/`, `segments/`, `renders/`, `review_frames/`, `ov_frames/`,
+  `snapshots/`, `final/`, and all `*.mp4`/`*.mp3`. Committed sources = md/json/py/html/
+  js/css + fonts + authored images. Installed skills are restored from `skills-lock.json`.
+- ffmpeg and ffprobe must be on PATH. `hyperframes` runs via `npx` (no root package.json;
+  each project pins its own CLI version in its `package.json`).

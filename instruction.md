@@ -1,8 +1,12 @@
-# instruction.md — global AI instructions for producing a video
+# instruction.md — AI instructions for the legacy EMO avatar pipeline
 
-These instructions apply to EVERY video project. Generate the video using the
-settings in the project's `config.json` and the structure in `sequences.json`
-(both in `projects/<CODE>/`). Track progress with `python studio.py status`.
+**Scope: these instructions apply ONLY to avatar-pipeline projects** — those
+carrying `config.json` + `script.xlsx` + `sequences.json` in `projects/<CODE>/`
+(the EMO explainer videos). HyperFrames-native projects are owned end to end by
+the `/hyperframes` skill and its workflows; none of the rules below bind them.
+
+Generate the video using the settings in the project's `config.json` and the
+structure in `sequences.json`. Track progress with `python studio.py status`.
 
 ## Rule 0 — checklist before anything
 
