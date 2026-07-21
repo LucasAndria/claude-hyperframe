@@ -10,27 +10,9 @@
 /output/
 /source-video/
 
-# ---- Per-video generated artifacts (keep source: xlsx/json/py/html/js/css, authored assets) ----
-projects/**/output/
-projects/**/source-video/
-projects/**/heygen_clips/
-projects/**/higgsfield/stills/
-projects/**/higgsfield/clips/
-projects/**/segments/
-projects/**/renders/
-projects/**/review_frames/
-projects/**/ov_frames/
-projects/**/snapshots/
-projects/**/_backup/
-projects/**/_final/
-projects/**/final/
-projects/**/_frames/
-projects/**/_qa/
-projects/**/*.mp4
-projects/**/*.mp3
-projects/**/*.bak.*
-projects/**/overlay_check.png
-projects/**/still_contact.png
+# ---- Projects: keep the projects/ folder in the repo, but never commit any project ----
+projects/*
+!projects/.gitkeep
 
 # ---- Node (per-project HyperFrames CLI) ----
 node_modules/
